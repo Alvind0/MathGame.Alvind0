@@ -4,10 +4,6 @@
  * main menu to choose operations and record five(configurable)
  * previous games until the application ends.
  */
-using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
-using System.Reflection.PortableExecutable;
-
 Random random = new Random();
 string? userInput;
 int chosenMenu = 0;
