@@ -4,447 +4,232 @@
  * main menu to choose operations and record five(configurable)
  * previous games until the application ends.
  */
+char userKeyInput;
+string? userStringInput;
+int chosenOption = 0, numberOfRounds = 0, difficultyLevel = 0, gameType = 0;
+
 Random random = new Random();
-string? userInput;
-int chosenMenu = 0;
-bool validInput = false;
+int operandMax = 0;
+int[] operands = new int[2];
+int answer = 0, userAnswer = 0;
+bool isCorrect = false;
+string operandType = "", operationResult = "";
 
-// Initialize variables for game history array
-string[] gameHistory = new string[5];
-string equationToAddToHistory = "";
+DateTime startTime, endTime;
+TimeSpan totalTime;
 
+List<string> gameHistory = new List<string>();
+
+InitializeGame();
 StartGame();
 
-void StartGame()
+// Add a "fancy" loading screen
+void InitializeGame()
 {
-    // Add a "fancy" loading screen
+
     for (int i = 0; i < 3; i++)
     {
         Console.Write("Initializing Math Game");
         for (int j = 0; j < 3; j++)
         {
             Console.Write(".");
-            Thread.Sleep(240);
+            Thread.Sleep(160);
         }
         Console.SetCursorPosition(0, Console.CursorTop);
         Console.Write(new string(' ', Console.BufferWidth));
         Console.SetCursorPosition(0, Console.CursorTop);
     }
-
-    while (true)
-    {
-        chosenMenu = ChooseOperation();
-
-        Console.Clear();
-        switch (chosenMenu)
-        {
-            case 1:
-                Console.WriteLine("Player has chosen: Addition\n");
-                Addition();
-                break;
-            case 2:
-                Console.WriteLine("Player has chosen: Subtraction\n");
-                Subtraction();
-                break;
-            case 3:
-                Console.WriteLine("Player has chosen: Multiplication\n");
-                Multiplication();
-                break;
-            case 4:
-                Console.WriteLine("Player has chosen: Division\n");
-                Division();
-                break;
-            case 5:
-                Console.WriteLine("Player has chosen: History\n");
-                ShowHistory();
-                break;
-        }
-        if (chosenMenu == 6) break;
-    }
-
-    Console.WriteLine("\nExiting game...\nPress any key to continue.");
+    Console.WriteLine("Welcome to the game. Press any key to continue. ");
     Console.ReadKey();
-
 }
-int ChooseOperation()
+
+void StartGame()
 {
-    int desiredOperation = 0;
     do
     {
         Console.Clear();
-        Console.WriteLine("Enter your desired operation using a number: ");
-        Console.WriteLine(" 1. Addition\n 2. Subtraction\n 3. Multiplication\n 4. Division\n 5. History\n 6. End Game\n");
+        Console.WriteLine(@"Choose a game: 
+1. Addition
+2. Subtraction
+3. Multiplication
+4. Division
+5. Random Game
+6. Game History
+7. End Game");
 
-        userInput = Console.ReadLine();
+        userKeyInput = Console.ReadKey().KeyChar;
 
-        if (userInput != null && int.TryParse(userInput, out desiredOperation))
+        if (char.IsDigit(userKeyInput))
         {
-            if (desiredOperation < 1 || desiredOperation > 6)
-            {
-                Console.WriteLine("Invalid input.");
-                continue;
-            }
+            chosenOption = int.Parse(userKeyInput.ToString());
+            if (chosenOption == 0 || chosenOption > 6) continue;
         }
-        validInput = true;
-    } while (!validInput);
 
-    return desiredOperation;
+        if (chosenOption == 6)
+        {
+            ShowHistory();
+            continue;
+        }
+
+        PlayGame(chosenOption);
+    } while (chosenOption != 7);
 }
 
-void Addition()
+void PlayGame(int chosenOption, bool isRandom = false)
 {
-    int randomNumber1 = 0;
-    int randomNumber2 = 0;
-    int correctAnswer = 0;
-    int userAnswer = 0;
-    bool isCorrect = false;
+    int score = 0;
 
+    if (chosenOption == 5) isRandom = true;
+    else gameType = chosenOption;
+
+    // Ask player for number of games
     while (true)
     {
-        randomNumber1 = random.Next(0, 100);
-        randomNumber2 = random.Next(0, 100);
-        correctAnswer = randomNumber1 + randomNumber2;
+        Console.Clear();
+        Console.WriteLine("How many times would you like to play?");
+        userStringInput = Console.ReadLine();
 
-        while (true)
+        if (userStringInput != null && int.TryParse(userStringInput, out numberOfRounds))
         {
-            Console.WriteLine($"What is the sum of {randomNumber1} and {randomNumber2}?");
-
-            userInput = Console.ReadLine();
-
-            if (userInput != null && int.TryParse(userInput, out userAnswer))
-            {
-                isCorrect = userAnswer == correctAnswer ? true : false;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer. Please input a positive integer.");
-                continue;
-            }
             break;
+        }
+    }
+
+    // Ask player for game difficulty
+    while (true)
+    {
+        Console.Clear();
+        Console.WriteLine(@"Choose difficulty:
+1. Easy
+2. Medium
+3. Hard");
+
+        userKeyInput = Console.ReadKey().KeyChar;
+        if (char.IsDigit(userKeyInput))
+        {
+            difficultyLevel = int.Parse(userKeyInput.ToString());
+            if (difficultyLevel == 0 || difficultyLevel > 3) continue;
+            break;
+        }
+    }
+
+    startTime = DateTime.Now;
+    for (int i = 0; i < numberOfRounds; i++)
+    {
+        Console.Clear();
+        if (isRandom)
+        {
+            gameType = random.Next(1, 5);
+        }
+
+        operands = getOperands(difficultyLevel, gameType);
+
+        switch (gameType)
+        {
+            case 1:
+                answer = operands[1] + operands[0];
+                operandType = "Addition";
+                operationResult = "Sum";
+                break;
+            case 2:
+                answer = operands[1] - operands[0];
+                operandType = "Subtraction";
+                operationResult = "Difference";
+                break;
+            case 3:
+                answer = operands[1] * operands[0];
+                operandType = "Multiplication";
+                operationResult = "Product";
+                break;
+            case 4:
+                answer = operands[1] / operands[0];
+                operandType = "Division";
+                operationResult = "Quotient";
+                break;
+        }
+
+        Console.WriteLine($"What is the {operationResult.ToLower()} of {operands[1]} and {operands[0]}");
+        userStringInput = Console.ReadLine();
+        if (userStringInput != null && int.TryParse(userStringInput, out userAnswer))
+        {
+            isCorrect = userAnswer == answer;
         }
 
         if (isCorrect)
-            Console.WriteLine("\nYou are correct! Congratulations!");
-        else
-            Console.WriteLine($"\nToo bad. You are incorrect.\nThe correct answer is {correctAnswer}");
-
-        // Add game to history
-        equationToAddToHistory = ($"The sum of {randomNumber1} and {randomNumber2}\nCorrect Answer: {correctAnswer}\t Player Answer: {userAnswer}");
-        AddGameToHistory(gameHistory, equationToAddToHistory);
-
-        // Ask user to play again or go back to the main menu
-        while (true)
         {
-            Console.WriteLine("\nPlay again?\n 1. Yes\n 2. No");
-            userInput = Console.ReadLine();
-            if (userInput != null && int.TryParse(userInput, out chosenMenu))
-            {
-
-                if (chosenMenu != 2 && chosenMenu != 1)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Invalid answer.");
-                    continue;
-                }
-                break;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer.");
-                continue;
-            }
-
-        }
-        if (chosenMenu == 1)
+            Console.WriteLine("You are correct!");
+            score++;
+        } else
         {
-            Console.Clear();
-            continue;
+            Console.WriteLine($"You are incorrect. The answer is {answer}");
         }
-        break;
+        Console.ReadKey();
     }
+    
+    endTime = DateTime.Now;
+    totalTime = endTime - startTime;
+
+    if (isRandom) operandType = "Random";
+    gameHistory.Add($"{DateTime.Now} | {totalTime.ToString(@"mm\:ss")} |{operandType}| {score} / {numberOfRounds}");
 }
 
-void Subtraction()
+int[] getOperands(int difficultyLevel, int gameType)
 {
-    int randomNumber1 = 0;
-    int randomNumber2 = 0;
-    int biggerNumber = 0;
-    int smallerNumber = 0;
-    int correctAnswer = 0;
-    int userAnswer = 0;
-    bool isCorrect = false;
+    int[] result = new int[2];
 
-    while (true)
+    switch (difficultyLevel)
     {
-        randomNumber1 = random.Next(0, 100);
-        randomNumber2 = random.Next(0, 100);
-        biggerNumber = Math.Max(randomNumber1, randomNumber2);
-        smallerNumber = Math.Min(randomNumber1, randomNumber2);
-
-
-        correctAnswer = biggerNumber - smallerNumber;
-
-        while (true)
-        {
-            Console.WriteLine($"What is the difference of {biggerNumber} and {smallerNumber}?");
-
-            userInput = Console.ReadLine();
-
-            if (userInput != null && int.TryParse(userInput, out userAnswer))
-            {
-                isCorrect = userAnswer == correctAnswer ? true : false;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer. Please input a positive integer.");
-                continue;
-            }
+        case 1:
+            operandMax = gameType != 4 ? 99 : 9;
             break;
-        }
-
-        if (isCorrect)
-            Console.WriteLine("\nYou are correct! Congratulations!");
-        else
-            Console.WriteLine($"\nToo bad. You are incorrect.\nThe correct answer is {correctAnswer}");
-
-        // Add game to history
-        equationToAddToHistory = ($"The difference of {biggerNumber} and {smallerNumber}\nCorrect Answer: {correctAnswer}\t Player Answer: {userAnswer}");
-        AddGameToHistory(gameHistory, equationToAddToHistory);
-
-        // Ask user to play again or go back to the main menu
-        while (true)
-        {
-            Console.WriteLine("\nPlay again?\n 1. Yes\n 2. No");
-            userInput = Console.ReadLine();
-            if (userInput != null && int.TryParse(userInput, out chosenMenu))
-            {
-
-                if (chosenMenu != 2 && chosenMenu != 1)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Invalid answer.");
-                    continue;
-                }
-                break;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer.");
-                continue;
-            }
-
-        }
-        if (chosenMenu == 1)
-        {
-            Console.Clear();
-            continue;
-        }
-        break;
-    }
-}
-
-void Multiplication()
-{
-    int randomNumber1 = 0;
-    int randomNumber2 = 0;
-    int correctAnswer = 0;
-    int userAnswer = 0;
-    bool isCorrect = false;
-
-    while (true)
-    {
-        randomNumber1 = random.Next(0, 25);
-        randomNumber2 = random.Next(0, 25);
-
-
-        correctAnswer = randomNumber1 * randomNumber2;
-
-        while (true)
-        {
-            Console.WriteLine($"What is the product of {randomNumber1} and {randomNumber2}?");
-
-            userInput = Console.ReadLine();
-
-            if (userInput != null && int.TryParse(userInput, out userAnswer))
-            {
-                isCorrect = userAnswer == correctAnswer ? true : false;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer. Please input a positive integer.");
-                continue;
-            }
+        case 2:
+            operandMax = gameType != 4 ? 999 : 99;
             break;
-        }
-
-        if (isCorrect)
-            Console.WriteLine("\nYou are correct! Congratulations!");
-        else
-            Console.WriteLine($"\nToo bad. You are incorrect.\nThe correct answer is {correctAnswer}");
-
-        // Add game to history
-        equationToAddToHistory = ($"The product of {randomNumber1} and {randomNumber2}\nCorrect Answer: {correctAnswer}\t Player Answer: {userAnswer}");
-        AddGameToHistory(gameHistory, equationToAddToHistory);
-
-        // Ask user to play again or go back to the main menu
-        while (true)
-        {
-            Console.WriteLine("\nPlay again?\n 1. Yes\n 2. No");
-            userInput = Console.ReadLine();
-            if (userInput != null && int.TryParse(userInput, out chosenMenu))
-            {
-
-                if (chosenMenu != 2 && chosenMenu != 1)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Invalid answer.");
-                    continue;
-                }
-                break;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer.");
-                continue;
-            }
-
-        }
-        if (chosenMenu == 1)
-        {
-            Console.Clear();
-            continue;
-        }
-        break;
+        case 3:
+            operandMax = gameType != 4 ? 9999 : 999;
+            break;
     }
-}
 
-void Division()
-{
-    int randomNumber1 = 0;
-    int randomNumber2 = 0;
-    int biggerNumber = 0;
-    int smallerNumber = 0;
-    int correctAnswer = 0;
-    int userAnswer = 0;
-    bool isCorrect = false;
 
-    while (true)
+
+    if (gameType == 4)
     {
-        // Check for divisibility
         do
         {
-            randomNumber1 = random.Next(0, 100);
-            randomNumber2 = random.Next(0, 100);
-            biggerNumber = Math.Max(randomNumber1, randomNumber2);
-            smallerNumber = Math.Min(randomNumber1, randomNumber2);
-            
-            if (biggerNumber % smallerNumber != 0)
-                continue;
+            result[0] = random.Next(1, operandMax);
+            result[1] = random.Next(1, operandMax);
+            Array.Sort(result);
+        } while (result[1] % result[0] != 0);
 
-            correctAnswer = biggerNumber / smallerNumber;
-            break;
-        } while (true);
-
-        while (true)
-        {
-            Console.WriteLine($"What is the quotient of {biggerNumber} and {smallerNumber}?");
-
-            userInput = Console.ReadLine();
-
-            if (userInput != null && int.TryParse(userInput, out userAnswer))
-            {
-                isCorrect = userAnswer == correctAnswer ? true : false;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer. Please input a positive integer.");
-                continue;
-            }
-            break;
-        }
-
-        if (isCorrect)
-            Console.WriteLine("\nYou are correct! Congratulations!");
-        else
-            Console.WriteLine($"\nToo bad. You are incorrect.\nThe correct answer is {correctAnswer}");
-
-        // Add game to history
-        equationToAddToHistory = ($"The quotient of {biggerNumber} and {smallerNumber}\nCorrect Answer: {correctAnswer}\t Player Answer: {userAnswer}");
-        AddGameToHistory(gameHistory, equationToAddToHistory);
-
-        // Ask user to play again or go back to the main menu
-        while (true)
-        {
-            Console.WriteLine("\nPlay again?\n 1. Yes\n 2. No");
-            userInput = Console.ReadLine();
-            if (userInput != null && int.TryParse(userInput, out chosenMenu))
-            {
-
-                if (chosenMenu != 2 && chosenMenu != 1)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Invalid answer.");
-                    continue;
-                }
-                break;
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Invalid answer.");
-                continue;
-            }
-
-        }
-        if (chosenMenu == 1)
-        {
-            Console.Clear();
-            continue;
-        }
-        break;
+        return result;
     }
+
+
+    result[0] = random.Next(1, operandMax);
+    result[1] = random.Next(1, operandMax);
+    Array.Sort(result);
+
+    return result;
+
 }
-
-void AddGameToHistory(string[] array, string newHistory)
-{
-    // if there is space, add newHistory to array
-    for (int i = 0; i < array.Length; i++)
-    {
-        if (string.IsNullOrEmpty(array[i]))
-        {
-            array[i] = newHistory;
-            return;
-        }
-    }
-
-    // if the array is full, replace from the bottom
-    for (int i = 0; i < array.Length - 1; i++)
-    {
-        array[i] = array[i + 1];
-    }
-    array[^1] = newHistory;
-}
-
 void ShowHistory()
 {
-    // Show history from new to old
-    Array.Reverse(gameHistory);
-    foreach (string history in gameHistory)
+    Console.Clear();
+    if (gameHistory.Count == 0)
     {
-        if (!string.IsNullOrEmpty(history))
-        {
-            Console.WriteLine($"{history}\n");
-        }
+        Console.WriteLine("No data yet.");
+        Console.WriteLine("Press any key to go back to main menu.");
+        Console.ReadKey();
+        return;
     }
-    Array.Reverse(gameHistory);
 
-    Console.WriteLine("Press any key to continue.");
+    Console.WriteLine("Game History\n");
+
+    foreach (string game in gameHistory)
+    {
+        Console.WriteLine(game);
+    }
+
+    Console.WriteLine("Press any key to go back to main menu.");
     Console.ReadKey();
 }
