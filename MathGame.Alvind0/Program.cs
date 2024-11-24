@@ -122,7 +122,7 @@ void PlayGame(int chosenOption, bool isRandom = false)
             gameType = random.Next(1, 5);
         }
 
-        operands = getOperands(difficultyLevel, gameType);
+        operands = GetOperands(difficultyLevel, gameType);
 
         switch (gameType)
         {
