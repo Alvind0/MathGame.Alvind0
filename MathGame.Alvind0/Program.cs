@@ -173,7 +173,7 @@ void PlayGame(int chosenOption, bool isRandom = false)
     gameHistory.Add($"{DateTime.Now} | {totalTime.ToString(@"mm\:ss")} |{operandType}| {score} / {numberOfRounds}");
 }
 
-int[] getOperands(int difficultyLevel, int gameType)
+int[] GetOperands(int difficultyLevel, int gameType)
 {
     int[] result = new int[2];
 
